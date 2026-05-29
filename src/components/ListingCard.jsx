@@ -10,7 +10,7 @@ const genderBadge = {
 
 export default function ListingCard({ listing, isActive, onClick }) {
   const navigate = useNavigate();
-  const { id, title, area, rent, tags, gender, available, views, type, brokerage, coverImage } = listing;
+  const { id, title, area, rent, amenities, gender, available, views, type, brokerage, coverImage } = listing;
   const badge = genderBadge[gender] || genderBadge['Any'];
 
   const handleVisit = (e) => {
@@ -84,7 +84,7 @@ export default function ListingCard({ listing, isActive, onClick }) {
         <span className="badge" style={{ background: badge.bg, color: badge.color, borderColor: badge.border }}>
           {gender}
         </span>
-        {tags.filter(t => t !== gender).slice(0, 2).map(tag => (
+        {(amenities || []).filter(t => t !== gender).slice(0, 2).map(tag => (
           <span key={tag} className="badge" style={{ background: '#F7F8FC', color: '#4A5568', borderColor: '#E2E8F0' }}>
             {tag}
           </span>

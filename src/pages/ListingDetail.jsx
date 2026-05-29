@@ -213,7 +213,7 @@ export default function ListingDetail() {
             <div className="card rounded-xl p-5">
               <h2 className="text-base font-bold mb-4" style={{ color: '#1A202C' }}>Amenities & Facilities</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {amenities.map(item => (
+                {(amenities || []).map(item => (
                   <div key={item} className="flex items-center gap-2.5 p-2.5 rounded-lg"
                     style={{ background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
                     <CheckCircle2 size={15} color="#0F9D58" className="shrink-0" />
@@ -227,7 +227,7 @@ export default function ListingDetail() {
             <div className="card rounded-xl p-5">
               <h2 className="text-base font-bold mb-4" style={{ color: '#1A202C' }}>House Rules</h2>
               <div className="space-y-2">
-                {rules.map(rule => (
+                {(rules || []).map(rule => (
                   <div key={rule} className="flex items-start gap-2.5 p-2.5 rounded-lg"
                     style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}>
                     <XCircle size={15} color="#DC2626" className="shrink-0 mt-0.5" />
@@ -247,11 +247,11 @@ export default function ListingDetail() {
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-base font-bold"
                   style={{ background: '#1B3A8C' }}>
-                  {ownerName[0]}
+                  {(ownerName || 'User')[0].toUpperCase()}
                 </div>
                 <div>
                   <p className="text-xs" style={{ color: '#718096' }}>Property Owner</p>
-                  <p className="text-sm font-bold" style={{ color: '#1A202C' }}>{ownerName}</p>
+                  <p className="text-sm font-bold" style={{ color: '#1A202C' }}>{ownerName || 'Property Owner'}</p>
                 </div>
               </div>
 

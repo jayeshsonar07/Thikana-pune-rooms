@@ -59,7 +59,7 @@ export default function HomePage() {
         l.area.toLowerCase().includes(q) ||
         l.address.toLowerCase().includes(q) ||
         l.type.toLowerCase().includes(q) ||
-        l.tags.some(t => t.toLowerCase().includes(q))
+        (l.amenities || []).some(t => t.toLowerCase().includes(q))
       );
     }
 

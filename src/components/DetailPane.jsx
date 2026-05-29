@@ -178,7 +178,7 @@ export default function DetailPane({ listing }) {
         <div>
           <h2 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#718096' }}>Amenities</h2>
           <div className="grid grid-cols-2 gap-2">
-            {amenities.map(item => (
+            {(amenities || []).map(item => (
               <div key={item} className="flex items-center gap-2 p-2 rounded-lg"
                 style={{ background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
                 <CheckCircle2 size={13} color="#0F9D58" />
@@ -194,7 +194,7 @@ export default function DetailPane({ listing }) {
         <div>
           <h2 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#718096' }}>House Rules</h2>
           <div className="space-y-1.5">
-            {rules.map(rule => (
+            {(rules || []).map(rule => (
               <div key={rule} className="flex items-start gap-2 p-2 rounded-lg"
                 style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}>
                 <XCircle size={13} color="#DC2626" className="shrink-0 mt-0.5" />
@@ -257,10 +257,10 @@ export default function DetailPane({ listing }) {
         {/* Owner */}
         <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#F7F8FC', border: '1px solid #E2E8F0' }}>
           <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-            style={{ background: '#1B3A8C' }}>{ownerName[0]}</div>
+            style={{ background: '#1B3A8C' }}>{(ownerName || 'User')[0].toUpperCase()}</div>
           <div className="flex-1 min-w-0">
             <p className="text-xs" style={{ color: '#718096' }}>Listed by</p>
-            <p className="text-sm font-bold" style={{ color: '#1A202C' }}>{ownerName}</p>
+            <p className="text-sm font-bold" style={{ color: '#1A202C' }}>{ownerName || 'Property Owner'}</p>
           </div>
           <button onClick={() => navigate(`/listing/${id}`)}
             className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all hover:bg-blue-50"
