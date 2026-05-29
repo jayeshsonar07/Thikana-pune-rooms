@@ -10,9 +10,14 @@ export async function getListings() {
     const snapshot = await getDocs(q);
     
     if (snapshot.empty) {
-      console.log('Firestore is empty. Seeding with mock data...');
-      await seedDatabase();
-      return getListings(); // Retry after seeding
+      console.log('Firestore is empty. Attempting to seed with mock data...');
+      const seeded = await seedDatabase();
+      if (seeded) {
+        return getListings(); // Retry after successful seeding
+      } else {
+        console.warn('Seeding failed (likely permission denied). Falling back to mock data.');
+        return mockListings;
+      }
     }
 
     return snapshot.docs.map(doc => ({
@@ -82,7 +87,9 @@ async function seedDatabase() {
     });
     await Promise.all(promises);
     console.log('Seeded database successfully!');
+    return true;
   } catch (error) {
     console.error('Error seeding database:', error);
+    return false;
   }
 }
