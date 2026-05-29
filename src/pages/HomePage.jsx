@@ -42,10 +42,10 @@ export default function HomePage() {
   }, []);
 
   const currentStats = [
-    { label: cmsContent.stat1Label, value: cmsContent.stat1Value, icon: Home },
-    { label: cmsContent.stat2Label, value: cmsContent.stat2Value, icon: Users },
-    { label: cmsContent.stat3Label, value: cmsContent.stat3Value, icon: Building },
-    { label: cmsContent.stat4Label, value: cmsContent.stat4Value, icon: TrendingUp },
+    { label: cmsContent?.stat1Label || 'Properties in Pune', value: cmsContent?.stat1Value || '500+', icon: Home },
+    { label: cmsContent?.stat2Label || 'Happy Tenants', value: cmsContent?.stat2Value || '2,000+', icon: Users },
+    { label: cmsContent?.stat3Label || 'Areas Covered', value: cmsContent?.stat3Value || '20+', icon: Building },
+    { label: cmsContent?.stat4Label || 'Daily Inquiries', value: cmsContent?.stat4Value || '100+', icon: TrendingUp },
   ];
 
   const filtered = useMemo(() => {
@@ -100,7 +100,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight" style={{ color: '#1A202C' }}>
-                {cmsContent.heroTitle.split('Pune').map((part, i, arr) => (
+                {(cmsContent?.heroTitle || 'Find your perfect stay in Pune').split('Pune').map((part, i, arr) => (
                   <span key={i}>
                     {part}
                     {i < arr.length - 1 && <span style={{ color: '#1B3A8C' }}>Pune</span>}
@@ -108,7 +108,7 @@ export default function HomePage() {
                 ))}
               </h1>
               <p className="text-sm mt-1" style={{ color: '#718096' }}>
-                {cmsContent.heroSubtitle}
+                {cmsContent?.heroSubtitle || 'PGs · Hostels · Flats · Studios — connect directly with owners, no broker'}
               </p>
             </div>
             {/* Stats */}
