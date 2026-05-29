@@ -6,7 +6,7 @@ import {
   Wifi, Waves, Droplets, Shirt, Car, UtensilsCrossed,
   Zap, Shield, Wind, BookOpen, Phone, Calendar, Eye
 } from 'lucide-react';
-import { listings } from '../data/mockListings';
+import { getListingById } from '../services/db';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -20,9 +20,29 @@ const PLACEHOLDER_IMGS = [
 export default function ListingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const listing = listings.find(l => l.id === Number(id));
+  const [listing, setListing] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [imgIdx, setImgIdx] = useState(0);
   const [liked, setLiked] = useState(false);
+
+  useEffect(() => {
+    async function loadListing() {
+      const data = await getListingById(id);
+      setListing(data);
+      setLoading(false);
+    }
+    loadListing();
+  }, [id]);
+
+  if (loading) return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <div className="flex-1 flex flex-col items-center justify-center text-center">
+        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-800 rounded-full animate-spin mb-3"></div>
+        <p className="font-semibold" style={{ color: '#4A5568' }}>Loading property details...</p>
+      </div>
+    </div>
+  );
 
   if (!listing) return (
     <div className="min-h-screen flex flex-col">

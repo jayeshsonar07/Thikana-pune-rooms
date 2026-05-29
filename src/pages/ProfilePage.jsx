@@ -1,31 +1,199 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Building2, Eye, Edit3, LogOut, MapPin, Phone, Mail, Star, Heart } from 'lucide-react';
+import {
+  Building2, Heart, PlusCircle, Edit3, Trash2,
+  MapPin, Eye, LogOut, Phone, Mail, Settings
+} from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { ownerListings } from '../data/mockListings';
+import { listings, ownerListings } from '../data/mockListings';
+import logo from '../assets/logo.png';
 
 const SAVED = [
-  { id: 1, title: "Rakhumai Girls' Hostel", area: 'Katraj', rent: 5000, available: true },
-  { id: 5, title: 'Viman Heights – Studio',  area: 'Viman Nagar', rent: 12000, available: true },
+  { id: 1, title: "Rakhumai Girls' Hostel", area: 'Katraj', rent: 5000, available: true, coverImage: listings[0].coverImage },
+  { id: 5, title: 'Viman Heights – Studio',  area: 'Viman Nagar', rent: 12000, available: true, coverImage: listings[4].coverImage },
 ];
 
+/* ── Vacancy toggle ─────────────────────────── */
+function Toggle({ value, onChange }) {
+  return (
+    <button type="button" onClick={() => onChange?.(!value)}
+      className="toggle-track" style={{ flexShrink: 0 }}
+      data-on={value}>
+      <div className="toggle-thumb" />
+    </button>
+  );
+}
+
+/* ── My Listings tab ────────────────────────── */
+function MyListings({ navigate }) {
+  const [items, setItems] = useState(ownerListings);
+
+  const handleToggle = (id, val) =>
+    setItems(prev => prev.map(p => p.id === id ? { ...p, available: val } : p));
+
+  const handleDelete = (id) => {
+    if (window.confirm('Delete this listing?'))
+      setItems(prev => prev.filter(p => p.id !== id));
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold" style={{ color: '#718096' }}>{items.length} active listings</p>
+        <button onClick={() => navigate('/add-listing')} className="btn-primary text-sm gap-1.5 flex items-center">
+          <PlusCircle size={14} /> Add Listing
+        </button>
+      </div>
+
+      {/* Stats mini row */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: 'Total', value: items.length, color: '#1B3A8C' },
+          { label: 'Active', value: items.filter(l => l.available).length, color: '#0F9D58' },
+          { label: 'Views', value: items.reduce((s, l) => s + l.views, 0).toLocaleString('en-IN'), color: '#D97706' },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="card rounded-xl p-4 text-center">
+            <p className="text-xl font-extrabold" style={{ color }}>{value}</p>
+            <p className="text-xs mt-0.5" style={{ color: '#718096' }}>{label}</p>
+          </div>
+        ))}
+      </div>
+
+      {items.length === 0 ? (
+        <div className="card rounded-2xl text-center py-16">
+          <Building2 size={42} color="#CBD5E0" className="mx-auto mb-3" />
+          <p className="font-semibold" style={{ color: '#4A5568' }}>No listings yet</p>
+          <button onClick={() => navigate('/add-listing')} className="btn-primary mt-4">Post First Listing</button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {items.map(listing => (
+            <div key={listing.id} className="card rounded-2xl overflow-hidden group">
+              {/* Image */}
+              <div className="relative h-40 bg-gray-100 overflow-hidden">
+                <img src={listing.coverImage} alt={listing.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  onError={e => { e.target.src = 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=400&q=60'; }} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                {/* Vacancy toggle */}
+                <div className="absolute bottom-3 left-3 bg-white/95 rounded-lg px-3 py-1.5 flex items-center gap-2">
+                  <Toggle value={listing.available} onChange={val => handleToggle(listing.id, val)} />
+                  <span className="text-xs font-bold" style={{ color: listing.available ? '#0F9D58' : '#A0AEC0' }}>
+                    {listing.available ? 'Available' : 'Full'}
+                  </span>
+                </div>
+                {/* Views */}
+                <div className="absolute top-3 right-3 bg-black/50 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Eye size={10} />{listing.views}
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="p-4">
+                <p className="text-xs font-bold uppercase tracking-wider mb-0.5" style={{ color: '#1B3A8C' }}>{listing.type}</p>
+                <h3 className="font-bold text-sm leading-snug line-clamp-1 mb-1" style={{ color: '#1A202C' }}>{listing.title}</h3>
+                <div className="flex items-center gap-1 mb-3" style={{ color: '#718096' }}>
+                  <MapPin size={11} /><span className="text-xs">{listing.area}</span>
+                </div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-base font-extrabold" style={{ color: '#1A202C' }}>
+                    ₹{listing.rent.toLocaleString('en-IN')}<span className="text-xs font-normal ml-0.5" style={{ color: '#A0AEC0' }}>/mo</span>
+                  </span>
+                </div>
+                <div className="divider mb-3" />
+                <div className="flex gap-2">
+                  <button onClick={() => navigate(`/edit-listing/${listing.id}`)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold border transition-all"
+                    style={{ color: '#1B3A8C', borderColor: '#C5D9FF' }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#EBF2FF'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <Edit3 size={12} /> Edit
+                  </button>
+                  <button onClick={() => handleDelete(listing.id)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold border transition-all"
+                    style={{ color: '#DC2626', borderColor: '#FECACA' }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <Trash2 size={12} /> Delete
+                  </button>
+                  <button onClick={() => navigate(`/listing/${listing.id}`)}
+                    className="flex items-center justify-center px-3 py-2 rounded-lg text-xs font-bold text-white"
+                    style={{ background: '#1B3A8C' }}>
+                    View
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Saved tab ──────────────────────────────── */
+function SavedListings({ navigate }) {
+  const [saved, setSaved] = useState(SAVED);
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {saved.map(l => (
+        <div key={l.id} className="card rounded-xl overflow-hidden group cursor-pointer"
+          onClick={() => navigate(`/listing/${l.id}`)}>
+          <div className="h-32 overflow-hidden bg-gray-100">
+            <img src={l.coverImage} alt={l.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              onError={e => { e.target.src = 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=400&q=60'; }} />
+          </div>
+          <div className="p-3 flex items-center justify-between">
+            <div>
+              <p className="font-bold text-sm" style={{ color: '#1B3A8C' }}>{l.title}</p>
+              <p className="text-xs mt-0.5" style={{ color: '#718096' }}>{l.area}</p>
+              <p className="text-sm font-extrabold mt-1" style={{ color: '#1A202C' }}>₹{l.rent.toLocaleString('en-IN')}/mo</p>
+            </div>
+            <button onClick={e => { e.stopPropagation(); setSaved(s => s.filter(x => x.id !== l.id)); }}>
+              <Heart size={18} className="fill-red-400 text-red-400" />
+            </button>
+          </div>
+        </div>
+      ))}
+      {saved.length === 0 && (
+        <div className="col-span-full card rounded-2xl text-center py-14">
+          <Heart size={36} color="#CBD5E0" className="mx-auto mb-3" />
+          <p className="font-semibold" style={{ color: '#4A5568' }}>No saved properties</p>
+          <button onClick={() => navigate('/home')} className="btn-primary mt-4">Explore Properties</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Main ProfilePage ───────────────────────── */
 export default function ProfilePage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('listings');
-  const user = { name: 'Rekha Patil', email: 'rekha@email.com', phone: '9876543210', role: 'Owner', joined: '2026-04-10', avatar: 'R' };
+
+  const user = { name: 'Rekha Patil', email: 'rekha@email.com', phone: '9876543210', role: 'Owner', joined: '2026-04-10' };
+
+  const TABS = [
+    { key: 'listings', label: 'My Listings', icon: Building2 },
+    { key: 'saved',    label: 'Saved',        icon: Heart },
+    { key: 'settings', label: 'Settings',     icon: Settings },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#F7F8FC' }}>
       <Navbar />
 
-      {/* Profile hero */}
+      {/* ── Profile hero ─────────────────────── */}
       <div className="bg-white" style={{ borderBottom: '1px solid #E2E8F0' }}>
         <div className="max-w-screen-xl mx-auto px-6 py-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            {/* Avatar */}
             <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-extrabold text-white shrink-0"
               style={{ background: 'linear-gradient(135deg, #1B3A8C, #2557C2)' }}>
-              {user.avatar}
+              {user.name[0]}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -39,38 +207,19 @@ export default function ProfilePage() {
                 <span className="flex items-center gap-1.5 text-sm" style={{ color: '#718096' }}>
                   <Phone size={13} />+91 {user.phone}
                 </span>
-                <span className="flex items-center gap-1.5 text-sm" style={{ color: '#718096' }}>
-                  Member since {new Date(user.joined).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
-                </span>
               </div>
             </div>
             <div className="flex gap-2">
-              <button className="btn-secondary gap-1.5 flex text-sm"><Edit3 size={14} />Edit Profile</button>
-              <button onClick={() => navigate('/login')} className="btn-ghost gap-1.5 flex text-sm"><LogOut size={14} />Logout</button>
+              <button onClick={() => navigate('/login')} className="btn-ghost gap-1.5 flex items-center text-sm">
+                <LogOut size={14} /> Logout
+              </button>
             </div>
-          </div>
-
-          {/* Stats row */}
-          <div className="flex gap-6 mt-6">
-            {[
-              { label: 'Listings', value: ownerListings.length },
-              { label: 'Total Views', value: ownerListings.reduce((s, l) => s + l.views, 0).toLocaleString('en-IN') },
-              { label: 'Active', value: ownerListings.filter(l => l.available).length },
-            ].map(({ label, value }) => (
-              <div key={label} className="text-center">
-                <p className="text-xl font-extrabold" style={{ color: '#1B3A8C' }}>{value}</p>
-                <p className="text-xs" style={{ color: '#718096' }}>{label}</p>
-              </div>
-            ))}
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="max-w-screen-xl mx-auto px-6 flex gap-0 border-t" style={{ borderColor: '#E2E8F0' }}>
-          {[
-            { key: 'listings', label: 'My Listings', icon: Building2 },
-            { key: 'saved',    label: 'Saved',        icon: Heart },
-          ].map(({ key, label, icon: Icon }) => (
+        <div className="max-w-screen-xl mx-auto px-6 flex border-t" style={{ borderColor: '#E2E8F0' }}>
+          {TABS.map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => setActiveTab(key)}
               className="flex items-center gap-1.5 px-5 py-3.5 text-sm font-semibold border-b-2 transition-all"
               style={{
@@ -83,45 +232,31 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Content */}
+      {/* ── Tab content ───────────────────────── */}
       <div className="max-w-screen-xl mx-auto px-6 py-6 w-full flex-1">
-        {activeTab === 'listings' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {ownerListings.map(l => (
-              <div key={l.id} className="card rounded-xl overflow-hidden group cursor-pointer"
-                onClick={() => navigate(`/listing/${l.id}`)}>
-                <div className="h-36 overflow-hidden bg-gray-100">
-                  <img src={l.coverImage} alt={l.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    onError={e => { e.target.src = 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=400&q=60'; }} />
-                </div>
-                <div className="p-4">
-                  <p className="font-bold text-sm" style={{ color: '#1B3A8C' }}>{l.title}</p>
-                  <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: '#718096' }}><MapPin size={11} />{l.area}</p>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-sm font-extrabold" style={{ color: '#1A202C' }}>₹{l.rent.toLocaleString('en-IN')}</span>
-                    <span className={`badge ${l.available ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
-                      {l.available ? 'Available' : 'Full'}
-                    </span>
-                  </div>
-                </div>
+        {activeTab === 'listings'  && <MyListings navigate={navigate} />}
+        {activeTab === 'saved'     && <SavedListings navigate={navigate} />}
+        {activeTab === 'settings'  && (
+          <div className="card rounded-2xl p-6 max-w-md space-y-5">
+            <h2 className="text-lg font-bold" style={{ color: '#1A202C' }}>Account Settings</h2>
+            {[
+              { label: 'Full Name',    value: user.name,  type: 'text' },
+              { label: 'Email',        value: user.email, type: 'email' },
+              { label: 'Phone (+91)',  value: user.phone, type: 'tel' },
+            ].map(({ label, value, type }) => (
+              <div key={label}>
+                <label className="form-label">{label}</label>
+                <input className="form-input" type={type} defaultValue={value} />
               </div>
             ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {SAVED.map(l => (
-              <div key={l.id} className="card rounded-xl p-4 cursor-pointer hover:shadow-card-hover transition-shadow"
-                onClick={() => navigate(`/listing/${l.id}`)}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-sm" style={{ color: '#1B3A8C' }}>{l.title}</p>
-                    <p className="text-xs mt-0.5" style={{ color: '#718096' }}>{l.area}</p>
-                    <p className="text-base font-extrabold mt-1.5" style={{ color: '#1A202C' }}>₹{l.rent.toLocaleString('en-IN')}/mo</p>
-                  </div>
-                  <Heart size={18} className="fill-red-400 text-red-400" />
-                </div>
-              </div>
-            ))}
+            <button className="btn-primary w-full">Save Changes</button>
+            <div className="divider" />
+            <button className="w-full text-sm font-semibold py-2.5 rounded-lg border transition-all"
+              style={{ color: '#DC2626', borderColor: '#FECACA' }}
+              onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              Delete Account
+            </button>
           </div>
         )}
       </div>

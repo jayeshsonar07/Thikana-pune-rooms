@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import PhotoUploadZone from '../components/PhotoUploadZone';
 import { listings } from '../data/mockListings';
+import { addListing } from '../services/db';
 import logo from '../assets/logo.png';
 import Footer from '../components/Footer';
 
@@ -81,6 +82,7 @@ export default function AddListing({ editMode }) {
   const [step, setStep] = useState(0);
   const [photos, setPhotos] = useState([]);
   const [customAmenity, setCustomAmenity] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   /* Initial form state */
   const [form, setForm] = useState({
@@ -126,10 +128,52 @@ export default function AddListing({ editMode }) {
 
   const selectedCount = Object.values(form.amenities).filter(Boolean).length + form.customAmenities.length;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert(editMode ? '✓ Listing updated!' : '✓ Listing published! It will appear in search soon.');
-    navigate('/dashboard');
+    if (step < STEPS.length - 1) return; // Only submit on last step
+    
+    setIsSubmitting(true);
+    try {
+      const selectedAmenities = Object.keys(form.amenities)
+        .filter(k => form.amenities[k])
+        .map(k => PRESET_AMENITIES.find(p => p.key === k)?.label);
+        
+      const allAmenities = [...selectedAmenities, ...form.customAmenities];
+
+      const listingData = {
+        title: form.title,
+        type: form.type,
+        area: form.area,
+        address: form.address,
+        rent: Number(form.rent),
+        deposit: Number(form.deposit),
+        brokerage: form.brokerage,
+        gender: form.gender,
+        foodIncluded: form.foodIncluded,
+        contact: form.contact,
+        description: form.description,
+        amenities: allAmenities,
+        rules: form.rules.split('\n').filter(Boolean),
+        roomTypes: form.roomTypes.split('\n').filter(Boolean),
+        mapsUrl: form.mapsUrl,
+        available: true,
+        views: 0,
+        ownerName: 'Rekha Patil', // Mocked authenticated user
+        coverImage: photos[0]?.url || 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&q=80',
+        images: photos.map(p => p.url)
+      };
+
+      if (!editMode) {
+        await addListing(listingData);
+      }
+      
+      alert(editMode ? '✓ Listing updated!' : '✓ Listing published! It will appear in search soon.');
+      navigate('/profile');
+    } catch (error) {
+      alert('Error saving listing. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   /* Shared label component */
@@ -478,10 +522,11 @@ export default function AddListing({ editMode }) {
                 Next: {STEPS[step + 1].label} <ArrowRight size={14} />
               </button>
             ) : (
-              <button type="submit"
-                className="btn-primary flex-1 flex items-center justify-center gap-2">
+              <button type="submit" disabled={isSubmitting}
+                className="btn-primary flex-1 flex items-center justify-center gap-2"
+                style={{ opacity: isSubmitting ? 0.7 : 1 }}>
                 <Check size={15} />
-                {editMode ? 'Save Changes' : 'Publish Listing'}
+                {isSubmitting ? 'Saving...' : editMode ? 'Save Changes' : 'Publish Listing'}
               </button>
             )}
           </div>

@@ -6,7 +6,7 @@ import ListingCard from '../components/ListingCard';
 import DetailPane from '../components/DetailPane';
 import MobileDetailModal from '../components/MobileDetailModal';
 import Footer from '../components/Footer';
-import { listings } from '../data/mockListings';
+import { getListings } from '../services/db';
 import { Search, Home, Users, Building, TrendingUp } from 'lucide-react';
 
 const STATS = [
@@ -18,11 +18,23 @@ const STATS = [
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [selected, setSelected] = useState(listings[0]);
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
   const [mobileSelected, setMobileSelected] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All Types');
   const [sortBy, setSortBy] = useState('default');
+
+  useEffect(() => {
+    async function loadData() {
+      const data = await getListings();
+      setListings(data);
+      if (data.length > 0) setSelected(data[0]);
+      setLoading(false);
+    }
+    loadData();
+  }, []);
 
   const filtered = useMemo(() => {
     let r = [...listings];
@@ -127,7 +139,12 @@ export default function HomePage() {
 
           {/* Cards */}
           <div className="flex-1 overflow-y-auto">
-            {filtered.length === 0 ? (
+            {loading ? (
+              <div className="flex flex-col items-center justify-center h-full py-16 px-4 text-center">
+                <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-800 rounded-full animate-spin mb-3"></div>
+                <p className="font-semibold" style={{ color: '#4A5568' }}>Loading properties...</p>
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full py-16 px-4 text-center">
                 <Search size={36} color="#CBD5E0" className="mb-3" />
                 <p className="font-semibold" style={{ color: '#4A5568' }}>No properties found</p>
