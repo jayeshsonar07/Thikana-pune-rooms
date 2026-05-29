@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { listenAuthState } from './services/db';
 import SplashScreen  from './pages/SplashScreen';
 import HomePage      from './pages/HomePage';
 import ListingDetail from './pages/ListingDetail';
@@ -9,6 +10,24 @@ import RegisterPage  from './pages/RegisterPage';
 import ProfilePage   from './pages/ProfilePage';
 import AdminLogin    from './pages/AdminLogin';
 import AdminPanel    from './pages/AdminPanel';
+
+function ProtectedRoute({ children }) {
+  const [user, setUser] = useState(undefined);
+  const location = useLocation();
+
+  useEffect(() => {
+    return listenAuthState(setUser);
+  }, []);
+
+  if (user === undefined) return null; // Wait for auth check
+  
+  if (!user) {
+    // Save where they wanted to go so we can redirect them back later if needed
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  return children;
+}
 
 export default function App() {
   // Force splash screen on hard reload
@@ -28,16 +47,20 @@ export default function App() {
         <Route path="/"                   element={<SplashScreen />} />
         <Route path="/home"               element={<HomePage />} />
         <Route path="/listing/:id"        element={<ListingDetail />} />
-        {/* Dashboard merged into Profile — /dashboard redirects */}
-        <Route path="/dashboard"          element={<Navigate to="/profile" replace />} />
-        <Route path="/add-listing"        element={<AddListing />} />
-        <Route path="/edit-listing/:id"   element={<AddListing editMode />} />
         <Route path="/login"              element={<LoginPage />} />
         <Route path="/register"           element={<RegisterPage />} />
-        <Route path="/profile"            element={<ProfilePage />} />
+        
+        {/* Protected Routes */}
+        <Route path="/dashboard"          element={<Navigate to="/profile" replace />} />
+        <Route path="/add-listing"        element={<ProtectedRoute><AddListing /></ProtectedRoute>} />
+        <Route path="/edit-listing/:id"   element={<ProtectedRoute><AddListing editMode /></ProtectedRoute>} />
+        <Route path="/profile"            element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        
+        {/* Admin Routes */}
         <Route path="/admin"              element={<Navigate to="/admin/login" replace />} />
         <Route path="/admin/login"        element={<AdminLogin />} />
         <Route path="/admin/*"            element={<AdminPanel />} />
+        
         {/* All unknown routes → splash */}
         <Route path="*"                   element={<Navigate to="/" replace />} />
       </Routes>

@@ -6,15 +6,8 @@ import ListingCard from '../components/ListingCard';
 import DetailPane from '../components/DetailPane';
 import MobileDetailModal from '../components/MobileDetailModal';
 import Footer from '../components/Footer';
-import { getListings } from '../services/db';
+import { getListings, getSiteContent } from '../services/db';
 import { Search, Home, Users, Building, TrendingUp } from 'lucide-react';
-
-const STATS = [
-  { label: 'Properties in Pune',  value: '500+',   icon: Home },
-  { label: 'Happy Tenants',        value: '2,000+', icon: Users },
-  { label: 'Areas Covered',        value: '20+',    icon: Building },
-  { label: 'Daily Inquiries',      value: '100+',   icon: TrendingUp },
-];
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -25,16 +18,35 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All Types');
   const [sortBy, setSortBy] = useState('default');
+  const [cmsContent, setCmsContent] = useState({
+    heroTitle: 'Find your perfect stay in Pune',
+    heroSubtitle: 'PGs · Hostels · Flats · Studios — connect directly with owners, no broker',
+    stat1Value: '500+', stat1Label: 'Properties in Pune',
+    stat2Value: '2,000+', stat2Label: 'Happy Tenants',
+    stat3Value: '20+', stat3Label: 'Areas Covered',
+    stat4Value: '100+', stat4Label: 'Daily Inquiries',
+  });
 
   useEffect(() => {
     async function loadData() {
-      const data = await getListings();
+      const [data, cms] = await Promise.all([
+        getListings(),
+        getSiteContent()
+      ]);
       setListings(data);
       if (data.length > 0) setSelected(data[0]);
+      if (cms) setCmsContent(cms);
       setLoading(false);
     }
     loadData();
   }, []);
+
+  const currentStats = [
+    { label: cmsContent.stat1Label, value: cmsContent.stat1Value, icon: Home },
+    { label: cmsContent.stat2Label, value: cmsContent.stat2Value, icon: Users },
+    { label: cmsContent.stat3Label, value: cmsContent.stat3Value, icon: Building },
+    { label: cmsContent.stat4Label, value: cmsContent.stat4Value, icon: TrendingUp },
+  ];
 
   const filtered = useMemo(() => {
     let r = [...listings];
@@ -88,16 +100,20 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight" style={{ color: '#1A202C' }}>
-                Find your perfect stay in{' '}
-                <span style={{ color: '#1B3A8C' }}>Pune</span>
+                {cmsContent.heroTitle.split('Pune').map((part, i, arr) => (
+                  <span key={i}>
+                    {part}
+                    {i < arr.length - 1 && <span style={{ color: '#1B3A8C' }}>Pune</span>}
+                  </span>
+                ))}
               </h1>
               <p className="text-sm mt-1" style={{ color: '#718096' }}>
-                PGs · Hostels · Flats · Studios — connect directly with owners, no broker
+                {cmsContent.heroSubtitle}
               </p>
             </div>
             {/* Stats */}
             <div className="grid grid-cols-4 gap-4 shrink-0">
-              {STATS.map(({ label, value, icon: Icon }) => (
+              {currentStats.map(({ label, value, icon: Icon }) => (
                 <div key={label} className="text-center">
                   <p className="text-lg font-extrabold" style={{ color: '#1B3A8C' }}>{value}</p>
                   <p className="text-[10px] leading-tight mt-0.5" style={{ color: '#718096' }}>{label}</p>

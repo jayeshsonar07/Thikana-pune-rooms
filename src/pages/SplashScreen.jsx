@@ -29,61 +29,35 @@ export default function SplashScreen() {
   return (
     <div
       className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden"
-      style={{ background: 'linear-gradient(135deg, #0F2460 0%, #1B3A8C 50%, #2557C2 100%)' }}
+      style={{ background: 'white' }}
     >
-      {/* Decorative circles */}
-      <div className="absolute w-[500px] h-[500px] rounded-full opacity-10"
-        style={{ background: 'white', top: '-150px', left: '-150px' }} />
-      <div className="absolute w-[400px] h-[400px] rounded-full opacity-10"
-        style={{ background: 'white', bottom: '-120px', right: '-120px' }} />
-      <div className="absolute w-[200px] h-[200px] rounded-full opacity-5"
-        style={{ background: 'white', top: '40%', left: '10%' }} />
-
       {/* Logo */}
       <div className="splash-logo relative z-10 mb-6">
-        {/* Glow ring */}
-        <div className="absolute inset-[-20px] rounded-full opacity-20"
-          style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%)' }} />
-        {/* White pill background */}
-        <div className="px-10 py-6 rounded-3xl" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-          <img
-            src={logo}
-            alt="Thikana"
-            style={{ height: 90, width: 'auto', objectFit: 'contain', display: 'block', filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.3))' }}
-            draggable={false}
-          />
-        </div>
+        <img
+          src={logo}
+          alt="Thikana"
+          style={{ height: 160, width: 'auto', objectFit: 'contain', display: 'block', filter: 'drop-shadow(0 4px 12px rgba(27,58,140,0.15))' }}
+          draggable={false}
+        />
       </div>
 
-      {/* Tagline */}
-      {phase >= 1 && (
-        <div className="anim-fade-up z-10 text-center px-6">
-          <p className="text-white text-lg font-medium tracking-wide mb-1 opacity-90">
-            शोध संपला, 'ठिकाणा' मिळाला.
-          </p>
-          <p className="text-blue-200 text-sm tracking-widest uppercase">
-            Rooms · PGs · Flats · Hostels
-          </p>
-        </div>
-      )}
-
       {/* Loading dots */}
-      {phase >= 2 && (
+      {phase >= 1 && (
         <div className="anim-fade flex gap-2 mt-8 z-10">
           {DOTS.map(i => (
-            <div key={i} className="w-2 h-2 rounded-full bg-white"
-              style={{ opacity: 0.4 + i * 0.3, animation: `shimmerPulse 0.8s ease ${i * 0.2}s infinite` }} />
+            <div key={i} className="w-2.5 h-2.5 rounded-full"
+              style={{ background: '#1B3A8C', opacity: 0.4 + i * 0.3, animation: `shimmerPulse 0.8s ease ${i * 0.2}s infinite` }} />
           ))}
         </div>
       )}
 
       {/* Progress bar at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: 'rgba(255,255,255,0.15)' }}>
+      <div className="absolute bottom-0 left-0 right-0 h-1.5" style={{ background: '#F7F8FC' }}>
         <div
           className="h-full rounded-r-full"
           style={{
             width: `${progress}%`,
-            background: 'linear-gradient(90deg, rgba(255,255,255,0.6), white)',
+            background: '#1B3A8C',
             transition: 'width 0.1s linear',
           }}
         />

@@ -1,17 +1,26 @@
-import { Search, PlusCircle, User, LogIn, Menu, X } from 'lucide-react';
+import { Search, PlusCircle, User, LogIn, Menu, X, LogOut } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { listenAuthState, logoutUser } from '../services/db';
 import logo from '../assets/logo.png';
 
 export default function Navbar() {
   const navigate   = useNavigate();
   const location   = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = listenAuthState(setUser);
+    return () => unsubscribe();
+  }, []);
 
   const navLinks = [
     { label: 'Find a Room', path: '/home' },
-    { label: 'Profile',     path: '/profile' },
   ];
+  if (user) {
+    navLinks.push({ label: 'Profile', path: '/profile' });
+  }
 
   const active = (path) => location.pathname === path;
 
@@ -63,12 +72,20 @@ export default function Navbar() {
 
           {/* ── Right actions ───────────────────────── */}
           <div className="hidden md:flex items-center gap-2 shrink-0 ml-auto">
-            <button onClick={() => navigate('/login')} className="btn-ghost text-sm gap-1.5 flex items-center">
-              <LogIn size={15} /> Log in
-            </button>
-            <button onClick={() => navigate('/register')} className="btn-secondary text-sm gap-1.5 flex items-center">
-              <User size={15} /> Register
-            </button>
+            {!user ? (
+              <>
+                <button onClick={() => navigate('/login')} className="btn-ghost text-sm gap-1.5 flex items-center">
+                  <LogIn size={15} /> Log in
+                </button>
+                <button onClick={() => navigate('/register')} className="btn-secondary text-sm gap-1.5 flex items-center">
+                  <User size={15} /> Register
+                </button>
+              </>
+            ) : (
+              <button onClick={() => { logoutUser(); navigate('/home'); }} className="btn-ghost text-sm gap-1.5 flex items-center" style={{ color: '#E53E3E' }}>
+                <LogOut size={15} /> Logout
+              </button>
+            )}
             <button onClick={() => navigate('/add-listing')} className="btn-primary text-sm gap-1.5 flex items-center">
               <PlusCircle size={15} /> Post Property
             </button>
@@ -99,9 +116,17 @@ export default function Navbar() {
               {link.label}
             </button>
           ))}
-          <div className="border-t mt-1 pt-2 flex gap-2" style={{ borderColor: '#E2E8F0' }}>
-            <button onClick={() => { navigate('/login'); setMobileOpen(false); }} className="flex-1 btn-ghost text-sm">Log in</button>
-            <button onClick={() => { navigate('/register'); setMobileOpen(false); }} className="flex-1 btn-secondary text-sm">Register</button>
+          <div className="border-t mt-1 pt-2 flex gap-2 flex-col" style={{ borderColor: '#E2E8F0' }}>
+            {!user ? (
+              <div className="flex gap-2">
+                <button onClick={() => { navigate('/login'); setMobileOpen(false); }} className="flex-1 btn-ghost text-sm">Log in</button>
+                <button onClick={() => { navigate('/register'); setMobileOpen(false); }} className="flex-1 btn-secondary text-sm">Register</button>
+              </div>
+            ) : (
+              <button onClick={() => { logoutUser(); navigate('/home'); setMobileOpen(false); }} className="w-full btn-ghost text-sm flex justify-center items-center gap-2" style={{ color: '#E53E3E' }}>
+                <LogOut size={15} /> Logout
+              </button>
+            )}
           </div>
         </div>
       )}

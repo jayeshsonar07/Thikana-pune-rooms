@@ -6,7 +6,7 @@ import {
   Bell, Save, Plus, TrendingUp, ArrowUpRight, Home,
   MapPin, ChevronRight
 } from 'lucide-react';
-import { listings } from '../data/mockListings';
+import { getListings, getSiteContent, updateSiteContent } from '../services/db';
 import logo from '../assets/logo.png';
 
 const ADMIN_PASSWORD = 'YUVAX2026';
@@ -128,6 +128,12 @@ function TopBar({ title, subtitle }) {
 function Overview() {
   useAdminAuth();
   const navigate = useNavigate();
+  const [listings, setListings] = useState([]);
+
+  useEffect(() => {
+    getListings().then(setListings);
+  }, []);
+
   const total  = listings.length;
   const active = listings.filter(l => l.available).length;
   const full   = listings.filter(l => !l.available).length;
@@ -135,8 +141,8 @@ function Overview() {
 
   const stats = [
     { label: 'Total Listings',    value: total,  icon: Building2,   color: '#1B3A8C', bg: '#EBF2FF', delta: '+2 this week' },
-    { label: 'Active / Available',value: active, icon: CheckCircle, color: '#0F9D58', bg: '#F0FDF4', delta: `${Math.round(active/total*100)}% active` },
-    { label: 'Full / Occupied',   value: full,   icon: XCircle,     color: '#DC2626', bg: '#FEF2F2', delta: `${Math.round(full/total*100)}% full` },
+    { label: 'Active / Available',value: active, icon: CheckCircle, color: '#0F9D58', bg: '#F0FDF4', delta: total ? `${Math.round(active/total*100)}% active` : '0% active' },
+    { label: 'Full / Occupied',   value: full,   icon: XCircle,     color: '#DC2626', bg: '#FEF2F2', delta: total ? `${Math.round(full/total*100)}% full` : '0% full' },
     { label: 'Total Views',       value: views,  icon: Eye,         color: '#D97706', bg: '#FFFBEB', delta: '+48 today' },
   ];
 
@@ -213,9 +219,13 @@ function Overview() {
 function ListingsAdmin() {
   useAdminAuth();
   const navigate = useNavigate();
-  const [items, setItems]   = useState(listings);
+  const [items, setItems]   = useState([]);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+
+  useEffect(() => {
+    getListings().then(setItems);
+  }, []);
 
   const filtered = items.filter(l => {
     const q = search.toLowerCase();
@@ -404,6 +414,7 @@ function UsersAdmin() {
 function ContentEditor() {
   useAdminAuth();
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [content, setContent] = useState({
     heroTitle:    'Find your perfect stay in Pune',
     heroSubtitle: 'PGs · Hostels · Flats · Studios — connect directly with owners, no broker',
@@ -413,8 +424,22 @@ function ContentEditor() {
     stat4Value: '100+', stat4Label: 'Daily Inquiries',
     footerCredit: 'Developed by Jayesh Sonar',
   });
+
+  useEffect(() => {
+    getSiteContent().then(data => {
+      if (data) setContent(data);
+    });
+  }, []);
+
   const upd = (k, v) => setContent(c => ({ ...c, [k]: v }));
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2500); };
+  
+  const handleSave = async () => { 
+    setLoading(true);
+    await updateSiteContent(content);
+    setLoading(false);
+    setSaved(true); 
+    setTimeout(() => setSaved(false), 2500); 
+  };
 
   return (
     <div className="space-y-5 max-w-2xl">
@@ -459,8 +484,8 @@ function ContentEditor() {
           </div>
         </div>
       ))}
-      <button onClick={handleSave} className="btn-primary gap-2 flex items-center">
-        <Save size={15} /> Save All Changes
+      <button onClick={handleSave} disabled={loading} className="btn-primary gap-2 flex items-center" style={{ opacity: loading ? 0.7 : 1 }}>
+        <Save size={15} /> {loading ? 'Saving...' : 'Save All Changes'}
       </button>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import { loginUser } from '../services/db';
 import logo from '../assets/logo.png';
 import Footer from '../components/Footer';
 
@@ -13,16 +14,30 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); setError('');
-    await new Promise(r => setTimeout(r, 900));
-    if (form.email && form.password) navigate('/profile');
-    else setError('Please fill in all fields.');
-    setLoading(false);
+    if (!form.email || !form.password) {
+      setError('Please fill in all fields.');
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      await loginUser(form.email, form.password);
+      navigate('/profile');
+    } catch (err) {
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setError('Invalid email or password.');
+      } else {
+        setError('Failed to log in. Please try again later.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#F7F8FC' }}>
-      {/* Minimal header */}
       <header className="bg-white" style={{ borderBottom: '1px solid #E2E8F0' }}>
         <div className="max-w-screen-xl mx-auto px-6 h-[62px] flex items-center">
           <button onClick={() => navigate('/home')}>
@@ -34,11 +49,8 @@ export default function LoginPage() {
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
           <div className="card rounded-2xl overflow-hidden">
-
-            {/* ── Top brand strip ── */}
             <div className="flex flex-col items-center py-8 px-6"
               style={{ background: 'linear-gradient(135deg, #0F2460 0%, #1B3A8C 100%)' }}>
-              {/* Logo — medium size */}
               <div className="w-24 h-24 rounded-2xl flex items-center justify-center mb-3"
                 style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)' }}>
                 <img src={logo} alt="Thikana" style={{ height: 60, objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
@@ -47,7 +59,6 @@ export default function LoginPage() {
               <p className="text-sm text-blue-200 mt-1">Sign in to your Thikana account</p>
             </div>
 
-            {/* ── Form ── */}
             <div className="p-7">
               {error && (
                 <div className="mb-4 p-3 rounded-lg text-sm font-medium"

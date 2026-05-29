@@ -6,13 +6,10 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { listings, ownerListings } from '../data/mockListings';
+import { getUserListings, listenAuthState, logoutUser, deleteListing, updateListing } from '../services/db';
 import logo from '../assets/logo.png';
 
-const SAVED = [
-  { id: 1, title: "Rakhumai Girls' Hostel", area: 'Katraj', rent: 5000, available: true, coverImage: listings[0].coverImage },
-  { id: 5, title: 'Viman Heights – Studio',  area: 'Viman Nagar', rent: 12000, available: true, coverImage: listings[4].coverImage },
-];
+const SAVED = [];
 
 /* ── Vacancy toggle ─────────────────────────── */
 function Toggle({ value, onChange }) {
@@ -26,16 +23,40 @@ function Toggle({ value, onChange }) {
 }
 
 /* ── My Listings tab ────────────────────────── */
-function MyListings({ navigate }) {
-  const [items, setItems] = useState(ownerListings);
+function MyListings({ navigate, userId }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleToggle = (id, val) =>
+  useEffect(() => {
+    if (userId) {
+      getUserListings(userId).then(data => {
+        setItems(data);
+        setLoading(false);
+      });
+    }
+  }, [userId]);
+
+  const handleToggle = async (id, val) => {
     setItems(prev => prev.map(p => p.id === id ? { ...p, available: val } : p));
-
-  const handleDelete = (id) => {
-    if (window.confirm('Delete this listing?'))
-      setItems(prev => prev.filter(p => p.id !== id));
+    try {
+      await updateListing(id, { available: val });
+    } catch (e) {
+      setItems(prev => prev.map(p => p.id === id ? { ...p, available: !val } : p));
+    }
   };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Delete this listing?')) {
+      try {
+        await deleteListing(id);
+        setItems(prev => prev.filter(p => p.id !== id));
+      } catch (e) {
+        alert('Failed to delete listing');
+      }
+    }
+  };
+
+  if (loading) return <div className="text-center py-10">Loading your properties...</div>;
 
   return (
     <div className="space-y-4">
@@ -173,8 +194,21 @@ function SavedListings({ navigate }) {
 export default function ProfilePage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('listings');
+  const [user, setUser] = useState(null);
 
-  const user = { name: 'Rekha Patil', email: 'rekha@email.com', phone: '9876543210', role: 'Owner', joined: '2026-04-10' };
+  useEffect(() => {
+    const unsubscribe = listenAuthState(setUser);
+    return () => unsubscribe();
+  }, []);
+
+  if (!user) return null; // Wait for redirect handled by App.jsx ProtectedRoute
+
+  const userProfile = { 
+    name: user.displayName || 'User', 
+    email: user.email, 
+    phone: '', 
+    role: 'Owner' 
+  };
 
   const TABS = [
     { key: 'listings', label: 'My Listings', icon: Building2 },
@@ -193,24 +227,21 @@ export default function ProfilePage() {
             {/* Avatar */}
             <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-extrabold text-white shrink-0"
               style={{ background: 'linear-gradient(135deg, #1B3A8C, #2557C2)' }}>
-              {user.name[0]}
+              {userProfile.name[0]?.toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-2xl font-extrabold" style={{ color: '#1A202C' }}>{user.name}</h1>
-                <span className="badge bg-blue-50 text-blue-700 border-blue-200">{user.role}</span>
+                <h1 className="text-2xl font-extrabold" style={{ color: '#1A202C' }}>{userProfile.name}</h1>
+                <span className="badge bg-blue-50 text-blue-700 border-blue-200">{userProfile.role}</span>
               </div>
               <div className="flex flex-wrap gap-4 mt-2">
                 <span className="flex items-center gap-1.5 text-sm" style={{ color: '#718096' }}>
-                  <Mail size={13} />{user.email}
-                </span>
-                <span className="flex items-center gap-1.5 text-sm" style={{ color: '#718096' }}>
-                  <Phone size={13} />+91 {user.phone}
+                  <Mail size={13} />{userProfile.email}
                 </span>
               </div>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => navigate('/login')} className="btn-ghost gap-1.5 flex items-center text-sm">
+              <button onClick={() => { logoutUser(); navigate('/home'); }} className="btn-ghost gap-1.5 flex items-center text-sm" style={{ color: '#E53E3E' }}>
                 <LogOut size={14} /> Logout
               </button>
             </div>
@@ -234,15 +265,14 @@ export default function ProfilePage() {
 
       {/* ── Tab content ───────────────────────── */}
       <div className="max-w-screen-xl mx-auto px-6 py-6 w-full flex-1">
-        {activeTab === 'listings'  && <MyListings navigate={navigate} />}
+        {activeTab === 'listings'  && <MyListings navigate={navigate} userId={user.uid} />}
         {activeTab === 'saved'     && <SavedListings navigate={navigate} />}
         {activeTab === 'settings'  && (
           <div className="card rounded-2xl p-6 max-w-md space-y-5">
             <h2 className="text-lg font-bold" style={{ color: '#1A202C' }}>Account Settings</h2>
             {[
-              { label: 'Full Name',    value: user.name,  type: 'text' },
-              { label: 'Email',        value: user.email, type: 'email' },
-              { label: 'Phone (+91)',  value: user.phone, type: 'tel' },
+              { label: 'Full Name',    value: userProfile.name,  type: 'text' },
+              { label: 'Email',        value: userProfile.email, type: 'email' },
             ].map(({ label, value, type }) => (
               <div key={label}>
                 <label className="form-label">{label}</label>

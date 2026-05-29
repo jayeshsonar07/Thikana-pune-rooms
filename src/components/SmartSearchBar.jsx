@@ -71,7 +71,7 @@ export default function SmartSearchBar({ searchQuery, setSearchQuery, activeFilt
               value={searchQuery || ''}
               onChange={e => { setSearchQuery?.(e.target.value); setShowSuggestions(true); }}
               onFocus={() => setShowSuggestions(true)}
-              placeholder="Search by area, PG name, type..."
+              placeholder="Search by area (e.g., Katraj), PG name, or keywords..."
               className="flex-1 text-sm outline-none bg-transparent"
               style={{ color: '#1A202C' }}
             />
@@ -103,7 +103,11 @@ export default function SmartSearchBar({ searchQuery, setSearchQuery, activeFilt
                 </p>
                 {suggestions.map(s => (
                   <button key={s}
-                    onMouseDown={() => { setSearchQuery?.(s); setShowSuggestions(false); }}
+                    onMouseDown={(e) => { 
+                      e.preventDefault(); 
+                      setSearchQuery?.(s); 
+                      setShowSuggestions(false); 
+                    }}
                     className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors"
                     style={{ color: '#2D3748' }}
                     onMouseEnter={e => { e.currentTarget.style.background = '#EBF2FF'; }}
@@ -116,19 +120,6 @@ export default function SmartSearchBar({ searchQuery, setSearchQuery, activeFilt
                 ))}
               </div>
             )}
-          </div>
-
-          {/* Divider */}
-          <div style={{ width: 1, background: '#E2E8F0', margin: '10px 0' }} />
-
-          {/* Location */}
-          <div className="flex items-center gap-2 px-3" style={{ minWidth: 140 }}>
-            <MapPin size={15} color="#A0AEC0" style={{ flexShrink: 0 }} />
-            <input
-              placeholder="Pune, Maharashtra"
-              className="text-sm outline-none bg-transparent flex-1"
-              style={{ color: '#4A5568', minWidth: 0 }}
-            />
           </div>
 
           {/* Divider */}

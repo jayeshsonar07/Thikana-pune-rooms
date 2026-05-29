@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import { registerUser } from '../services/db';
 import logo from '../assets/logo.png';
 import Footer from '../components/Footer';
 
@@ -9,14 +10,34 @@ export default function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', role: 'tenant' });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+  
   const upd = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.name || !form.email || !form.password) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+    
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1200));
-    navigate('/profile');
-    setLoading(false);
+    setError('');
+    
+    try {
+      await registerUser(form.email, form.password, form.name);
+      navigate('/profile');
+    } catch (err) {
+      if (err.code === 'auth/email-already-in-use') {
+        setError('This email is already in use. Please sign in instead.');
+      } else if (err.code === 'auth/weak-password') {
+        setError('Password should be at least 6 characters.');
+      } else {
+        setError('Failed to create account. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -32,8 +53,6 @@ export default function RegisterPage() {
       <main className="flex-1 flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
           <div className="card rounded-2xl overflow-hidden">
-
-            {/* ── Brand strip ── */}
             <div className="flex flex-col items-center py-7 px-6"
               style={{ background: 'linear-gradient(135deg, #0F2460 0%, #1B3A8C 100%)' }}>
               <div className="w-24 h-24 rounded-2xl flex items-center justify-center mb-3"
@@ -45,7 +64,13 @@ export default function RegisterPage() {
             </div>
 
             <div className="p-7">
-              {/* Role selector */}
+              {error && (
+                <div className="mb-4 p-3 rounded-lg text-sm font-medium"
+                  style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA' }}>
+                  {error}
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-2 mb-5 p-1 rounded-xl" style={{ background: '#F7F8FC', border: '1px solid #E2E8F0' }}>
                 {['tenant', 'owner'].map(role => (
                   <button key={role} type="button" onClick={() => upd('role', role)}
@@ -79,8 +104,8 @@ export default function RegisterPage() {
                 <div>
                   <label className="form-label">Password</label>
                   <div className="relative">
-                    <input className="form-input pr-10" type={showPass ? 'text' : 'password'} placeholder="Min 8 characters"
-                      value={form.password} onChange={e => upd('password', e.target.value)} required minLength={8} />
+                    <input className="form-input pr-10" type={showPass ? 'text' : 'password'} placeholder="Min 6 characters"
+                      value={form.password} onChange={e => upd('password', e.target.value)} required minLength={6} />
                     <button type="button" onClick={() => setShowPass(s => !s)}
                       className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: '#A0AEC0' }}>
                       {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
